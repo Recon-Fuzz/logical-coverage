@@ -55,6 +55,22 @@ My goal with this document is to define how to explore these paths and help dete
 
 ## Motivating Examples
 
+### ERC4626 Linear Code
+
+Given the deposit function for a ERC4626 Vault, we need to perform the following:
+
+- `mint` some `asset` to self
+- `approve` the token for `deposit`
+- Call `deposit` with `min(allowance, balanceOf)`
+
+A manual reviewer with any meaningful experience intuitively understands this.
+
+A fuzzer will waste (1/ handlers) possibly classing the `deposit` function, and would require millions of requests before performing a deposit
+
+
+
+Similar reasoning for withdraw / redeem, in lack of tokens, any call to these functions is completely unnecessary
+
 
 - Morpho fuzzing
 
