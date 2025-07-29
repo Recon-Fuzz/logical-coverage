@@ -90,3 +90,16 @@ Many optimization properties can be viewed as trying to maximize an unknown conv
 Convex functions have the property of having only on global minima and have monotonicity around it.
 
 These functions can be fairly easily solved by modern solvers, which leads us to expect that fuzzers should have a easier time in resolving them.
+
+
+
+# Dependencies (TODO: NOT FINISHED)
+
+- Direct Dependency (Gates)
+- Direct Linear Dependency (Paths)
+- Complex Linear Dependency (Bridges)
+- Cyclic Linear Dependency
+
+- Convex Dependency (can this be direct or non direct?)
+
+- Exact Dependency (cryptographically unfeasible vs dictionary based)
