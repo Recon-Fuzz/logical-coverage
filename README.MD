@@ -35,6 +35,10 @@ This because for any Reverting Coverage Class, we can write an assertion that tr
 
 However, given this fact, we can look at all Reverting Coverage classes directly, and save ourselves the need for a Meta Property.
 
+Given each Coverage Class there's a corresponding Set of Inputs that will allow us to reach that coverage. Note that the Set can be empty for classes that are not feasible.
+
+Given that some Coverage Classes require some specific precondition, the Set of Inputs is best categorized as a Sequence of Sets of Inputs that will allow the Coverage Class to be reached.
+
 ## Intuition on Coverage
 
 Given a stateless (doesn't use storage variables), a function coverage is a direct result of the parameters it is provided.
@@ -65,25 +69,24 @@ Given the deposit function for a ERC4626 Vault, we need to perform the following
 
 A manual reviewer with any meaningful experience intuitively understands this.
 
-A fuzzer will waste (1/ handlers) possibly classing the `deposit` function, and would require millions of requests before performing a deposit
+A fuzzer will waste (1/ handlers) possibly classing the `deposit` function, and would require millions of requests before performing a deposit.
 
+Similar reasoning for `withdraw` / `redeem`, in lack of tokens, any call to these functions is completely unnecessary.
 
+This type of linear relation is very simple to express and solve for solvers, implying that our fuzzers can only benefit by applying more formal methods.
 
-Similar reasoning for withdraw / redeem, in lack of tokens, any call to these functions is completely unnecessary
+### Morpho fuzzing
 
+Fuzzers don't currently have an easy way to handle structs, this is arguably a limitation of how their corpus is generated.
 
-- Morpho fuzzing
+However, in practice this limitation makes it so that even fuzzing Morpho (600 loc self contained contract), requires an unreasonably long amount of time.
 
-Current fuzz
-                   
+The key issue with fuzzing Morpho is that the fuzzer doesn't seem to recognize that once it deploys a market, which results in a specific `marketId`, it's forced to continue fuzzing for that specific `marketId`, as all other markets won't be available to it.
 
-- Strictly increasing properties
+### Convex Optimization Functions
 
+Many optimization properties can be viewed as trying to maximize an unknown convex optimization function
 
-## TODO
+Convex functions have the property of having only on global minima and have monotonicity around it.
 
-Most importantly we want to emphasize the distinction between how a Coverage Guided Fuzzer works, and a Logical Coverage Guided Fuzzer would work
-
-Our goal is to separate Input Classes, and Coverage Classes as to ensure all of those get into the corpus
-
-Notice how inputs belong to discrete sets, but may not necessarily have any other property (such as contiguity)
+These functions can be fairly easily solved by modern solvers, which leads us to expect that fuzzers should have a easier time in resolving them.
