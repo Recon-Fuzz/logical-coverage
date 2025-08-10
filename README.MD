@@ -22,7 +22,7 @@ We can define 3 types of Coverage Classes
 - Reverting
 - Assertion Breaking
 
-Assertion Breaking Coverage Classes are the ones we want to reach
+Assertion Breaking Coverage Classes are the ones we want to reach.
 
 Reverting Coverage Classes can be useful to identify DOS, and technically contain `Assertion Breaking` CCs.
 
@@ -31,7 +31,7 @@ It's worth noting that due to how we write fuzz tests (assertions as the oracle)
 - Non Reverting -> For state space exploration / generation of preconditions
 - Assertion Breaking -> To trigger an assertion
 
-This because for any Reverting Coverage Class, we can write an assertion that triggers that call as a Try/Catch
+This because for any Reverting Coverage Class, we can write an assertion that triggers that call as a Try/Catch.
 
 However, given this fact, we can look at all Reverting Coverage classes directly, and save ourselves the need for a Meta Property.
 
@@ -69,7 +69,7 @@ Given the deposit function for a ERC4626 Vault, we need to perform the following
 
 A manual reviewer with any meaningful experience intuitively understands this.
 
-A fuzzer will waste (1/ handlers) possibly classing the `deposit` function, and would require millions of requests before performing a deposit.
+A fuzzer will waste (1/ handlers) possibly classing the `deposit` function, and would require many requests before performing a deposit.
 
 Similar reasoning for `withdraw` / `redeem`, in lack of tokens, any call to these functions is completely unnecessary.
 
@@ -85,23 +85,22 @@ The key issue with fuzzing Morpho is that the fuzzer doesn't seem to recognize t
 
 ### Convex Optimization Functions
 
-Many optimization properties can be viewed as trying to maximize an unknown convex optimization function
+Many optimization properties can be viewed as trying to maximize an unknown convex optimization function.
 
 Convex functions have the property of having only on global minima and have monotonicity around it.
 
 These functions can be fairly easily solved by modern solvers, which leads us to expect that fuzzers should have a easier time in resolving them.
 
+# Definition
 
-# Dependencies (TODO: NOT FINISHED)
+I define Logical Coverage as the Union of all Non Reverting Coverage Classes and Assertion Breaking Coverage Classes for a Smart Contract System that are Feasible.
 
-- Direct Dependency (Gates)
-- Direct Linear Dependency (Paths)
-- Complex Linear Dependency (Bridges)
-- Cyclic Linear Dependency
+The definition is broad as it ultimately will include some Coverage Classes that a human would consider equivalent.
 
-- Convex Dependency (can this be direct or non direct?)
+However the definition is exchaustive as it enumerates all possibilities.
 
-- Exact Dependency (cryptographically unfeasible vs dictionary based)
+It stands to reason that any Security Reviewer will want to visualize the Coverage Classes
+
 
 
 # Branching Idea
@@ -120,53 +119,117 @@ Given a function that has state and external calls, we need to analyze the possi
 
 ## Storage preconditions
 
-We can call those the storage preconditions
+We can call those the storage preconditions.
 
 ## Input Classes
 
-Given a set of storage preconditions (finite by definition)
+Given a set of storage preconditions (finite by definition).
 
-A corresponding set of Inputs can be identified for each Coverage Class that is feasible given a entry for the storage precondition
+A corresponding set of Inputs can be identified for each Coverage Class that is feasible given a entry for the storage precondition.
 
-[Storage Preconditions, [Input Classes]]: Coverage Classes
+[Storage Preconditions, [Input Classes]]: Coverage Classes.
 
-The union of all [Storage Preconditions, [Input Classes]] will result in all feasible Coverage Classes
+The union of all [Storage Preconditions, [Input Classes]] will result in all feasible Coverage Classes.
 
-All Coverage Classes that don't belong to the set are unfeasible.
-
+All Coverage Classes that don't belong to the set are unfeasible.,
 
 # First Level Approximations
 
 Given a function, determine the relevant coverage classes.
-Given storage, determine the bounds (approximate them by excess)
-Generate [Storage Preconditions, [Input Classes]]
+Given storage, determine the bounds (approximate them by excess).
+Generate [Storage Preconditions, [Input Classes]].
 At each point during a Concrete Run, clamp inputs around [Input Classes] for the function as we have already determine that all calls that don't belong are wasted.
-
-TODO: Benchmark efficacy of this, how many calls can we save?
-This is probably a win, at all times.
-
--> Symbolic CFG? Symbolic Coverage Classes?
-
-
--> Code -> AST -> Coverage Classes -> Solved | Partial Concrete vs Fully Symbolic.
 
 # Second Level Approximations
 
-Separate properties by storage slot influence
+Separate properties by storage slot influence.
 
-Then apply first level approximation
+Then apply first level approximation.
 
-This allows skipping functions and operations which are irrelevant for a given property
+This allows skipping functions and operations which are irrelevant for a given property.
 
-This also allows speeding up shrinking, as ultimately we already know there are no relevant operations
+This also allows speeding up shrinking, as ultimately we already know there are no relevant operations.
+
+I expect most fuzzers should use this strategy to break specific properties.
+
+# Third Level Approximation
+
+Given a specific Coverage Class, determine the calls to setters that would end up causing the Storage Preconditions to be valid.
+
+# Fuzzers Implementation
+
+All of the operations described above are akin to "lightmaps baking", we're preprocessing the smart contract paths to determine which paths are feasible.
+
+## Union
+
+Given the current concrete state, it is trivial to check which Storage Preconditions we satisfy.
+
+Given the starting state, we can explore paths that will lead us to the Storage Preconditions, some of these are likely to timeout due to complexity.
+
+Given the new states, after applying Corpus Transformation, if we don't recognize the current Concrete State in one of the "solved" Storage Preconditions, we know the fuzzer has found a path to a Storage Precondition for which we had timeouts.
+
+After having reached this state, we can apply the same algorithm.
+
+# Expected changes in fuzzers
+
+I don't expect fuzzers to work by having a consistent corpus size and then mutating it.
+
+I believe fuzzers will instead generate basic corpus that is based on the simplest to reach coverage classes.
 
 
-# TODO
+# Dependencies [TODO]
 
-- External Calls
-- Storage Loops / Dependencies -> Path to get to Storage Coverage Class
+Below I list an intuition for certain relations that should over time be solved very quickly by fuzzers
 
+- Direct Dependency (Gates)
 
+A boolean that needs to be true for something to happen can be viewed as a gate for a specific set of coverage classes
 
+Those classes (or entire functions) can be ignored whenever we have a direct dependency, until the value is changed.
 
+Very common examples:
+- Paused
+- Initialized
+- Operation Disabled
+- Operating on a Market ID
 
+- Direct Linear Dependency (Paths)
+
+Certain operation consume other values linearly, these are limited by the min([VALUES])
+
+Very common examples:
+- Allowances
+- Balances
+
+- Cyclic Linear Dependency (Roads)
+
+A linear dependency may not be directly expressed through the relation of a function to another.
+
+However a linear dependency can be emergent from the combination of multiple function calls.
+
+A very commmon example: The balance of an ERC4626 would be tied to the balance of asset, allowance of asset to the vault, and the call to mint.
+
+Therefore we can fairly easily see (easily for us, most likely not easy for a machine), that the `redeem` function is linearly dependent on the sequence of calls to [mint, approve, deposit)
+
+And in lack of those calls, calling `redeem` is a waste of cpu cycles.
+
+- Convex Dependency (can this be direct or non direct?)
+
+A Convex Dependency is the general case of linear dependency
+
+Where linear dependency is easy to plot and understand immediately, a Convex dependency represent some monotonic relation between a sequence of functions and a specific target function
+
+Very common example:
+- Reaching a liquidation threshold through a Utilization Based IRM
+
+The matematical equation to express the utilization would be a sequence of polynomial, the interest formula would be an exponential formula, we may not necessarily be able to compute an exact root for the expression, however we would be able to know that over time the values increase following a geometric series, therefore we would be able to solve for many optimization issues.
+
+(Note that an exact property may be harder to solve, however, because we should be able to express a Convex Dependency, we should be able to simply iterate over the values via Newton Raphson, and find an approximation that breaks the property or is close to that).
+
+- Exact Dependency (cryptographically unfeasible vs dictionary based)
+
+It would be dishonest for me to ignore Exact Dependencies, meaning the requirement of the fuzzer to generate an exact value.
+
+Having the fuzzer generate an exact state with a specific value is non trivial and in many cases may not be computationally feasible.
+
+Formal methods would help identify these, and when combined with the usage of dictionaries, this should give the fuzzer the best chance to identify a counter example.
