@@ -91,7 +91,7 @@ We can view Logical Coverage as a set of paths that uses Coverage Classes to ach
 
 My goal with this document is to define how to explore these paths and help determine which paths can be solved, vs which paths cannot be solved.
 
-# Definition
+# Definition
 
 We define Logical Coverage as the Union of all Non Reverting Coverage Classes and Assertion Breaking Coverage Classes for a Smart Contract System that are Feasible.
 
