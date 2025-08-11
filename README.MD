@@ -6,17 +6,51 @@ This research has 2 goals:
 - Given a Chimera like Fuzzing Setup, helping fuzzers reach coverage with zero user input (AutoClamp)
 - Giving manual reviewers a better defined checklist to help them determine if they have reviewed all possible meaningful states for their audit
 
+## Motivating Examples
+
+### ERC4626 Linear Code
+
+Given the deposit function for a ERC4626 Vault, we need to perform the following:
+
+- `mint` some `asset` to self
+- `approve` the token for `deposit`
+- Call `deposit` with `min(allowance, balanceOf)`
+
+A manual reviewer with any meaningful experience intuitively understands this.
+
+A fuzzer will waste (1/ handlers) possibly classing the `deposit` function, and would require many requests before performing a deposit.
+
+Similar reasoning for `withdraw` / `redeem`, in lack of tokens, any call to these functions is completely unnecessary.
+
+This type of linear relation is very simple to express and solve for solvers, implying that our fuzzers can only benefit by applying more formal methods.
+
+### Morpho fuzzing
+
+Fuzzers don't currently have an easy way to handle structs, this is arguably a limitation of how their corpus is generated.
+
+However, in practice this limitation makes it so that even fuzzing Morpho (600 loc self contained contract), requires an unreasonably long amount of time.
+
+The key issue with fuzzing Morpho is that the fuzzer doesn't seem to recognize that once it deploys a market, which results in a specific `marketId`, it's forced to continue fuzzing for that specific `marketId`, as all other markets won't be available to it.
+
+### Convex Optimization Functions
+
+Many optimization properties can be viewed as trying to maximize an unknown convex optimization function.
+
+Convex functions have the property of having only on global minima and have monotonicity around it.
+
+These functions can be fairly easily solved by modern solvers, which leads us to expect that fuzzers should have a easier time in resolving them.
+
 ## Definitions
 
 Given a smart contract and it's function we define Coverage as the line coverage that can be achieve by some input.
 
-Given the concept of Coverage, we can take the set of all possible coverage results for a function.
+Given the concept of Coverage, we take the set of all possible coverage results for a function.
 
 We use the term Coverage Classes for the set of all these coverage results.
 
 # Types of Coverage Classes
 
-We can define 3 types of Coverage Classes
+We can define 3 types of Coverage Classes:
 
 - Non Reverting
 - Reverting
@@ -57,43 +91,9 @@ We can view Logical Coverage as a set of paths that uses Coverage Classes to ach
 
 My goal with this document is to define how to explore these paths and help determine which paths can be solved, vs which paths cannot be solved.
 
-## Motivating Examples
-
-### ERC4626 Linear Code
-
-Given the deposit function for a ERC4626 Vault, we need to perform the following:
-
-- `mint` some `asset` to self
-- `approve` the token for `deposit`
-- Call `deposit` with `min(allowance, balanceOf)`
-
-A manual reviewer with any meaningful experience intuitively understands this.
-
-A fuzzer will waste (1/ handlers) possibly classing the `deposit` function, and would require many requests before performing a deposit.
-
-Similar reasoning for `withdraw` / `redeem`, in lack of tokens, any call to these functions is completely unnecessary.
-
-This type of linear relation is very simple to express and solve for solvers, implying that our fuzzers can only benefit by applying more formal methods.
-
-### Morpho fuzzing
-
-Fuzzers don't currently have an easy way to handle structs, this is arguably a limitation of how their corpus is generated.
-
-However, in practice this limitation makes it so that even fuzzing Morpho (600 loc self contained contract), requires an unreasonably long amount of time.
-
-The key issue with fuzzing Morpho is that the fuzzer doesn't seem to recognize that once it deploys a market, which results in a specific `marketId`, it's forced to continue fuzzing for that specific `marketId`, as all other markets won't be available to it.
-
-### Convex Optimization Functions
-
-Many optimization properties can be viewed as trying to maximize an unknown convex optimization function.
-
-Convex functions have the property of having only on global minima and have monotonicity around it.
-
-These functions can be fairly easily solved by modern solvers, which leads us to expect that fuzzers should have a easier time in resolving them.
-
 # Definition
 
-I define Logical Coverage as the Union of all Non Reverting Coverage Classes and Assertion Breaking Coverage Classes for a Smart Contract System that are Feasible.
+We define Logical Coverage as the Union of all Non Reverting Coverage Classes and Assertion Breaking Coverage Classes for a Smart Contract System that are Feasible.
 
 The definition is broad as it ultimately will include some Coverage Classes that a human would consider equivalent.
 
@@ -102,12 +102,11 @@ However the definition is exchaustive as it enumerates all possibilities.
 It stands to reason that any Security Reviewer will want to visualize the Coverage Classes
 
 
-
 # Branching Idea
 
-Given some functions we can take all the possible branches in the code
+Given some functions we can take all the possible branches in the code.
 
-Given those branches we can argue each branch that has no impact on other function is a terminal leaf in a decision tree (TODO: Is this the right data structure)
+Given those branches we can argue each branch that has no impact on other function is a terminal leaf in a decision tree (TODO: Is this the right data structure).
 
 Given each function we can take each function that requires no particular state to work (meaning there exist some inputs for which the function won't revert), and we can consider these the start of our decision tree.
 
@@ -121,26 +120,30 @@ Given a function that has state and external calls, we need to analyze the possi
 
 We can call those the storage preconditions.
 
+We can determine an overestimation of all possible Coverage Classes by allowing the storage value to have all possible symbolic values within it's type range.
+
+The overestimation allows to quickly determine all interesting storage preconditions for a given function (as it massively reduces path dependence).
+
 ## Input Classes
 
-Given a set of storage preconditions (finite by definition).
-
-A corresponding set of Inputs can be identified for each Coverage Class that is feasible given a entry for the storage precondition.
+Given a set of storage preconditions (finite by definition), a corresponding set of Inputs can be identified for each Coverage Class that is enabled by the storage precondition.
 
 [Storage Preconditions, [Input Classes]]: Coverage Classes.
 
-The union of all [Storage Preconditions, [Input Classes]] will result in all feasible Coverage Classes.
+The union of all [Storage Preconditions, [Input Classes]] will result in all Coverage Classes (Feasible + Unfeasible).
 
-All Coverage Classes that don't belong to the set are unfeasible.,
+If we were able to determine all feasible Storage Preconditions, and created this set of [Feasible Storage Preconditions, [Input Classes], we'd be left with only Feasible Coverage Classes. Meaning our Logical Coverage (the set) is smaller than the set of all possible Coverage Coverage Classes.
 
-# First Level Approximations
+
+# Practical Ideas [WIP]
+## First Level Approximations
 
 Given a function, determine the relevant coverage classes.
 Given storage, determine the bounds (approximate them by excess).
 Generate [Storage Preconditions, [Input Classes]].
 At each point during a Concrete Run, clamp inputs around [Input Classes] for the function as we have already determine that all calls that don't belong are wasted.
 
-# Second Level Approximations
+## Second Level Approximations
 
 Separate properties by storage slot influence.
 
@@ -152,15 +155,15 @@ This also allows speeding up shrinking, as ultimately we already know there are 
 
 I expect most fuzzers should use this strategy to break specific properties.
 
-# Third Level Approximation
+## Third Level Approximation
 
 Given a specific Coverage Class, determine the calls to setters that would end up causing the Storage Preconditions to be valid.
 
-# Fuzzers Implementation
+## Fuzzers Implementation
 
 All of the operations described above are akin to "lightmaps baking", we're preprocessing the smart contract paths to determine which paths are feasible.
 
-## Union
+### Union
 
 Given the current concrete state, it is trivial to check which Storage Preconditions we satisfy.
 
@@ -176,10 +179,50 @@ I don't expect fuzzers to work by having a consistent corpus size and then mutat
 
 I believe fuzzers will instead generate basic corpus that is based on the simplest to reach coverage classes.
 
+More specifically we can take inspiration from LLM training to help the fuzzer reduce the amount of operations it wastes.
+
+## SMT Solving [TODO: Exact inputs, Coverage Classes, Unlocking next coverage systematically)
+
+SMT Solving with concrete bounds will help speed up the fuzzer.
+
+Anytime a element belongs to the same Coverage Class, it may not be added to the corpus (I believe there are edge cases tied to optimization mode vs reaching full coverage here)
+
+Using Coverage Classes instead of random inputs should also allow us to run the SMT solver on the given inputs and then store those results as part of the corpus.
+
+This should be feasible because running SMT queries on concretized values is massively faster than providing the SMT solver with all the branches.
+
+## Dependency List 
+
+Even in lack of any sophisticated SMT Solving, the mere notion of Storage Preconditions allows us to devise a more appropriate algorithm for chosing starting points from which to build our corpus as well as a more nuanced algorithm for chosing which function the fuzzer should call.
+
+After a first scan for overapproximated Coverage Classes for all functions.
+
+We can run a very efficient AST analysis to identify the dependency list for storage slots.
+
+A simple algorithm would be:
+- For each function, for each storage slot
+- Add to "depends on" if the function reads the storage slot
+- Adds the "is precondition" if the function writes the storage slot
+
+NOTE:
+We can further refine this by also listing the relation (which could be as simple as: [from input, linear, complex]), this would result in a lot of interesting strategies to improve performance.
+
+Off of our dependency list, given a specific property we'd:
+- Determine the storage slots of the property we're trying to break
+- Determine the functions that influence those storage slots (preconditions)
+- Start from functions that are not influenced by anything
+- Add based on storage preconditions, a set of functions that could be called, with their coverage classes
+
+This massively reduces the function calls down to a more efficient subset.
+
+## TODO: Coverage Independent Partitions 
+Parts of the Coverage that are not dependent from each other -> Basically different systems
 
 # Dependencies [TODO]
 
-Below I list an intuition for certain relations that should over time be solved very quickly by fuzzers
+Below I list an intuition for certain relations that should over time be solved very quickly by fuzzers.
+
+This is mostly WIP.
 
 - Direct Dependency (Gates)
 
