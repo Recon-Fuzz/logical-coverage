@@ -113,11 +113,17 @@ It stands to reason that any Security Reviewer will want to visualize the Covera
 
 # Branching Idea
 
-Given some functions we can take all the possible branches in the code.
+Given a list of smart contracts and their functions.
 
-Given those branches we can argue each branch that has no impact on other function is a terminal leaf in a decision tree (TODO: Is this the right data structure).
+Functions that don't read nor write state can be viewed as edges without vertices in a graph.
 
-Given each function we can take each function that requires no particular state to work (meaning there exist some inputs for which the function won't revert), and we can consider these the start of our decision tree.
+Functions that read state have vertices stemming from the functions that influence said state.
+
+Functions that write to state have vertices originating from them and pointing to the functions that consume the state.
+
+It's intuitive to think that the graph will lead to cycles anytime a function consumes a variable it reads, as well as anytime functions influence each other (both read and write).
+
+At this point in the analysis we cannot say much about these functions, except for the intuition that while a cycle of funtion calls may be identified, that cycle may still resolve, or approximate, to a convex function, meaning in aggregate it's still a manageable complexity for formal techniques.
 
 # Prerequisites for Coverage
 
