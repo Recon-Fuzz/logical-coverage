@@ -24,6 +24,8 @@ Similar reasoning for `withdraw` / `redeem`, in lack of tokens, any call to thes
 
 This type of linear relation is very simple to express and solve for solvers, implying that our fuzzers can only benefit by applying more formal methods.
 
+An ideal fuzzer would recognize the key relation between `mint`, `approve` and `deposit` (and others) as well as the linear relation, giving it the ability to reach coverage in just a few calls, as well as to maximize the values for `deposit` by optimizing that linear relation.
+
 ### Morpho fuzzing
 
 Fuzzers don't currently have an easy way to handle structs, this is arguably a limitation of how their corpus is generated.
@@ -31,6 +33,10 @@ Fuzzers don't currently have an easy way to handle structs, this is arguably a l
 However, in practice this limitation makes it so that even fuzzing Morpho (600 loc self contained contract), requires an unreasonably long amount of time.
 
 The key issue with fuzzing Morpho is that the fuzzer doesn't seem to recognize that once it deploys a market, which results in a specific `marketId`, it's forced to continue fuzzing for that specific `marketId`, as all other markets won't be available to it.
+
+In lack of using an enabled `marketId` the fuzzer cannot `supply` nor `deposit` let alone `liquidate` positions. The `marketId` is a simple yet hard to surpass gate for the fuzzer to reach coverage in any meaningful way.
+
+An ideal fuzzer would recognize the relation between a parameter and a storage value, note that the storage value enables new levels of coverage, then proceed the function call to enable the market as the start node for many of it's sequences.
 
 ### Convex Optimization Functions
 
@@ -40,13 +46,17 @@ Convex functions have the property of having only on global minima and have mono
 
 These functions can be fairly easily solved by modern solvers, which leads us to expect that fuzzers should have a easier time in resolving them.
 
+An ideal fuzzer will recognize these "Convex Chains" and loop over them with the goal of unlocking a new region of feasible combinations.
+
 ## Definitions
 
-Given a smart contract and it's function we define Coverage as the line coverage that can be achieve by some input.
+Given a smart contract and its functions we define Coverage as the line coverage that can be achieve by some input.
 
 Given the concept of Coverage, we take the set of all possible coverage results for a function.
 
 We use the term Coverage Classes for the set of all these coverage results.
+
+While inputs to a call can be different, we can view them as belonging to the same Input Class if they result in the same Coverage.
 
 # Types of Coverage Classes
 
@@ -93,14 +103,13 @@ My goal with this document is to define how to explore these paths and help dete
 
 # Definition
 
-We define Logical Coverage as the Union of all Non Reverting Coverage Classes and Assertion Breaking Coverage Classes for a Smart Contract System that are Feasible.
+Given a function, and its Coverage Classes.
 
-The definition is broad as it ultimately will include some Coverage Classes that a human would consider equivalent.
+We define Feasible Coverage Classes, as the Coverage Classes for which there exists a set of Coverage Classes for some functions [f1, f2,...fn] such that the Storage Precondition for these Coverage Classes can be achieved.
 
-However the definition is exchaustive as it enumerates all possibilities.
+Starting from every Function as a starting point, we define Logical Coverage as the sequences of all calls that maximally explore all the Coverage Classes that are influenced by the storage slots that influence and are influenced by the starting Function.
 
-It stands to reason that any Security Reviewer will want to visualize the Coverage Classes
-
+It stands to reason that any Security Reviewer will want to visualize the Coverage Classes as well as many parts of the Logical Coverage.
 
 # Branching Idea
 
