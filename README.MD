@@ -291,3 +291,23 @@ It would be dishonest for me to ignore Exact Dependencies, meaning the requireme
 Having the fuzzer generate an exact state with a specific value is non trivial and in many cases may not be computationally feasible.
 
 Formal methods would help identify these, and when combined with the usage of dictionaries, this should give the fuzzer the best chance to identify a counter example.
+
+
+---
+
+All of the above leads us to 100% coverage.
+
+I thought our discussion was about going above that.
+
+So here we go.
+
+In discussing the above we have discussed strategies to explore state space, and arguably we have found a way (or an intuition to cover all of it by covering their classes).
+
+So now we have to go past 100%.
+
+- The ratio of the values in a line / operation could be different
+- The operation could cause precision loss
+- The operation may not be idempotent
+- The operation may be inversely related (opening and closing gives you more assets, instead of less).
+
+I have a strong belief that we do not have "an infinite amount of options", however we have many
