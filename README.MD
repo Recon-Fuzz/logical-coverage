@@ -334,6 +334,8 @@ My intuition tells me that there is a small subset of meta-properties that are a
 - The growth of 2 related variables can grow at a different slope. (Linearity with different slopes can be fundamentally different from what we consider linearity)
 - The ratio of 2 variables can be altered in a non consistent way.
 
+- In a reentrant state is the perfect example
+
 I have a strong belief that we do not have "an infinite amount of options", however we have many.
 
 ------------------------------------------------------
