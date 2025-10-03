@@ -351,10 +351,17 @@ The line covered is the same, but the msg.sender isn't
 So the msg.sender is another level of coverage?
 ----
 
+data.length being abused to pass different types of validations
+It's the same line coverage, but it's different values. So in a sense the "line coverage" that is different is in the value?
+
+----
+
 Logic mistake / Incorrect value 
 -> Value returned is wrong
 -> Real value is right
 -> Mistake has no reflection in coverage, this is purely logical / spec based.
+
+----
 
 ## World Split
 
@@ -374,3 +381,4 @@ Logic mistake / Incorrect value
 
 ## Resource Consumption
 address.balance changes have an implicit coverage class wherever used
+
