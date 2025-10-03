@@ -342,7 +342,19 @@ I have a strong belief that we do not have "an infinite amount of options", howe
 ------------------------------------------------------
 
 Mapping condensed into one variable?
-Lack of param validation, what type of coverage does this imply?
+Lack of param validation / access control
+
+If I can transfer the assets on someone elses behalf
+
+The line covered is the same, but the msg.sender isn't
+
+So the msg.sender is another level of coverage?
+----
+
+Logic mistake / Incorrect value 
+-> Value returned is wrong
+-> Real value is right
+-> Mistake has no reflection in coverage, this is purely logical / spec based.
 
 ## World Split
 
