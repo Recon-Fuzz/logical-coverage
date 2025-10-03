@@ -363,6 +363,13 @@ Logic mistake / Incorrect value
 
 ----
 
+Bunni exploit
+
+Altered ratio -> Creating an imaginary amount of liquidity?
+https://blog.bunni.xyz/posts/exploit-post-mortem/
+
+---
+
 ## World Split
 
 - Reentrancy
