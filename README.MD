@@ -354,4 +354,5 @@ I have a strong belief that we do not have "an infinite amount of options", howe
 
 - Using different prices for an oracle within the same transaction
 - Pricing an asset incorrectly
-
+- Injected address that behaves differently (incorrect validation, e.g. Signature Retrieval with Precompile)
+- Allowance / Operation that is outside of the code in scope (e.g. honeypot router = steal all assets)
