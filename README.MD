@@ -309,5 +309,7 @@ So now we have to go past 100%.
 - The operation could cause precision loss
 - The operation may not be idempotent
 - The operation may be inversely related (opening and closing gives you more assets, instead of less).
+- The growth of 2 related variables can grow at a different slope
+- The ratio of 2 variables can be altered in a non consistent way
 
 I have a strong belief that we do not have "an infinite amount of options", however we have many
