@@ -340,3 +340,18 @@ I have a strong belief that we do not have "an infinite amount of options", howe
 
 ------------------------------------------------------
 ------------------------------------------------------
+
+## World Split
+
+- Reentrancy
+- Truncation in division
+
+## Ratio splits
+
+- Variable ratios changing
+
+## Information Asymmetry
+
+- Using different prices for an oracle within the same transaction
+- Pricing an asset incorrectly
+
