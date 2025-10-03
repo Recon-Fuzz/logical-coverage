@@ -292,8 +292,8 @@ Having the fuzzer generate an exact state with a specific value is non trivial a
 
 Formal methods would help identify these, and when combined with the usage of dictionaries, this should give the fuzzer the best chance to identify a counter example.
 
-
----
+------------------------------------------------------
+------------------------------------------------------
 
 All of the above leads us to 100% coverage.
 
@@ -305,11 +305,36 @@ In discussing the above we have discussed strategies to explore state space, and
 
 So now we have to go past 100%.
 
-- The ratio of the values in a line / operation could be different
-- The operation could cause precision loss
-- The operation may not be idempotent
-- The operation may be inversely related (opening and closing gives you more assets, instead of less).
-- The growth of 2 related variables can grow at a different slope
-- The ratio of 2 variables can be altered in a non consistent way
+Fundamentally we have cut planes in order to explore all visible (and implied) paths that execution can take.
 
-I have a strong belief that we do not have "an infinite amount of options", however we have many
+However, when we write properties that observe the system, we are creating a new set of constraints that applies to the same line.
+
+While the code will belong to the same line, we are in principle saying that the line is being explored under more additional condition, effectively adding a simple switch statement to the code:
+```solidity
+switch(observed property) {
+  case 1:
+  case 2:
+  etc...
+}
+```
+
+This seems to map out to the concept of triviality, as ultimately we are observing the execution of some branch while performing assertions on them.
+
+While it may be impossible to enumerate, explore and resolve all possible non trivial properties, it's still worth enumerating a few I've identified by working as Security Researcher over the years.
+
+My intuition tells me that there is a small subset of meta-properties that are always useful to explore, and that focusing on these likely will reduce computational complexity and yield above average results.
+
+- The ratio of the values in a line / operation could be different.
+
+- The operation could cause precision loss (Implies a world split where the code was part of a group (no precision loss in division), vs when it's no longer in a group. Truncation operations are a new set of operations, which may or may not bring us back to a group, they share the same lines of code but are fundamentally different behaviour.
+
+- The operation may not be idempotent. Lack of reversibility and idempotency, especially in financial software, implies non linearity most of the time.
+- The operation may be inversely related (opening and closing gives you more assets, instead of less).
+
+- The growth of 2 related variables can grow at a different slope. (Linearity with different slopes can be fundamentally different from what we consider linearity)
+- The ratio of 2 variables can be altered in a non consistent way.
+
+I have a strong belief that we do not have "an infinite amount of options", however we have many.
+
+------------------------------------------------------
+------------------------------------------------------
