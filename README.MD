@@ -341,6 +341,9 @@ I have a strong belief that we do not have "an infinite amount of options", howe
 ------------------------------------------------------
 ------------------------------------------------------
 
+Mapping condensed into one variable?
+Lack of param validation, what type of coverage does this imply?
+
 ## World Split
 
 - Reentrancy
@@ -356,3 +359,6 @@ I have a strong belief that we do not have "an infinite amount of options", howe
 - Pricing an asset incorrectly
 - Injected address that behaves differently (incorrect validation, e.g. Signature Retrieval with Precompile)
 - Allowance / Operation that is outside of the code in scope (e.g. honeypot router = steal all assets)
+
+## Resource Consumption
+address.balance changes have an implicit coverage class wherever used
