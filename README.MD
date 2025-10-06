@@ -389,3 +389,20 @@ https://blog.bunni.xyz/posts/exploit-post-mortem/
 ## Resource Consumption
 address.balance changes have an implicit coverage class wherever used
 
+
+# On Params
+
+## Addresses
+
+The address belongs to a contract, it doesn't, it's a precompile or an EOA.
+The address is the caller or the tx.origin.
+2 or more addresses can have relations:
+- Same address
+- Different, A > B, or vice versa
+
+## On Numbers
+
+They are the same number
+They are different
+Of similar scale (where scale is subjective but objectively scale is the remainder / precision loss from them)
+Scale of the precision loss they generate
