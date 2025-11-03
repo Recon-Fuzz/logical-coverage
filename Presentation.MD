@@ -18,8 +18,18 @@ Is there a way to systematically identify and explore all smart contract combina
 
 ## Implied Lines
 
+- msg.value causes balance to decrease, the code is in the node.
+
 ## Implied state
+
+- `reentrant` state being the classic example
 
 ## Metaproperties
 
+- Relation between 2 variables: [similar magnitude, 1 massively bigger than other]
+
+
 ## World splits
+
+- Divisions causing no / negligible truncation
+- Truncation causing significant invariants no longer holding
