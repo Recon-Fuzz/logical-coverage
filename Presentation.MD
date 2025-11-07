@@ -177,7 +177,7 @@ A very interesting example if how given certain values and ratios a 1 wei roundi
 
 Let's examine this formula:
 ```solidity
-uint256 sharesToIssue = amt * totalSupply // totalAssets; /// @audit // to emphasize this is integer division
+uint256 sharesToIssue = amt * totalSupply / totalAssets; /// @audit / is integer division
 ```
 
 Because (ℤ, //) is not a group, we don't have the reversibility of operations as a guarantee.
