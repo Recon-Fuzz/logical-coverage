@@ -65,7 +65,7 @@ We're going to be discussing MetaProperties, as properties that "cut" a contract
 
 Unclear if enumerable or not: TODO: Find is math properties.
 
-### Reflection on Coverage Classes and manual review.
+### Reflection on Coverage Classes and manual review.
 
 It stands within reason that a manual reviewer that can prove they have systematically analyzed all coverage classes for all functions as well as all combinations between feasible calls (or a select list of those that would be considered dangerous), has performed a statisfactory review of the codebase.
 
@@ -84,6 +84,10 @@ Having defined Coverage Classes above, we can apply the same line of thinking fo
 The below considerations are incomplete, subject to change and (by definition? TODO) underrepresent the possible ways in which we can analyze a system of smart contracts.
 
 They are useful because they shed light into some common bugs and by generalizing them we can avoid missing these.
+
+### Actionable Insight
+
+Visualizing the Coverage Classes, enumerating them, checking the list is a way to say "I'm done with the review".
 
 ## Implied Lines
 
@@ -114,6 +118,16 @@ On the other hand, `USDT` compatibility is a specific instance of the "arbitrary
 - Precompile signature skip bug -> TODO Some wallet
 - Parity hack
 - Every unsanitized input that doesn't imply math, e.g. ability to become owner, mint / burn.
+
+### Actionable insight
+
+A Smart Contract SUT that presents implied lines should be reviewed with an explicit list of Integrations, and Targets tested.
+
+Project developers should refraing from allowing a `*` to be introduced in the system as it fundamentally makes it impossible to review a SUT with the same rigor.
+
+Successful projects tend to list out the exact integrations they will use, and smart researchers will review all the integrations for gotchas and bugs.
+
+My point is that a review should be done under proper constraints, doing so makes it much easier to reason around the system and overall makes the system much safer as well as the code simpler due not having to account for extremely complex combinations.
 
 ## Implied state
 
@@ -159,7 +173,20 @@ I created this category to emphasize it's complexity as well as net distinction 
 
 In reality all math in our domain is not in a group, meaning it's never well behaved as we'd expect it to, but in practice in most cases it is, and as such I created the idea of World Splits to signal when something completely unintuive happens to the mathematical behaviour of the SUT.
 
-TODO FIBONACCI or something else?
+A very interesting example if how given certain values and ratios a 1 wei rounding error can be magnified into a massive error.
+
+Let's examine this formula:
+```solidity
+uint256 sharesToIssue = amt * totalSupply // totalAssets; /// @audit // to emphasize this is integer division
+```
+
+Because (ℤ, //) is not a group, we don't have the reversibility of operations as a guarantee.
+
+This means that every division can cause a step-wise change in the relation between the variables in a way that is non-reversible.
+
+The classic example to this is the donation attack, where a first depositor donates a bunch of assets to a vault with the goal of causing the `sharesToIssue` to lock an immediately loss to future depositors.
+
+The attack has been explored in many ways, and can sometimes be escalated to an implied donation attack, by abusing other rounding errors in the system.
 
 ### Examples
 
@@ -171,7 +198,6 @@ TODO FIBONACCI or something else?
 - Bold bug I found in my report
 - Euler V1
 - Degenbox with one function to allow repay
-- Balancer hack? TODO
 
 ## References
 
