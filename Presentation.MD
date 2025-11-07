@@ -77,25 +77,101 @@ Therefore experience is the ability to apply a heuristic to under represent the 
 
 ## External Coverage as part of our systems coverage
 
+Being a Auditor that uses Stateful Fuzzing daily, I have found it useful to extend coverage to not only the code the customer wrote, but also the code that is being consumed as well as the code from mocks or simplifications that we generated.
+
+Having defined Coverage Classes above, we can apply the same line of thinking for a set of gotchas that most manual reviewers can quickly identify that are not easily measured by applying coverage metrics only on the target contracts.
+
+The below considerations are incomplete, subject to change and (by definition? TODO) underrepresent the possible ways in which we can analyze a system of smart contracts.
+
+They are useful because they shed light into some common bugs and by generalizing them we can avoid missing these.
+
 ## Implied Lines
 
-- msg.value causes balance to decrease, the code is in the node.
+Smart Contracts are executed many levels above a CPU, even assembly implies chip operations, which are abstracted away and can result in bugs.
+
+For our purpose, implied lines are lines that exist in some part of the code that interacts with our SUT.
+
+This is to note that these lines of code exist, they don't require any imagination nor the creation of a meta level abstraction.
+
+The most basic example is `msg.value` (e.g. using `msg.value` in a loop) as well as `USDT` not working without low level assembly.
+
+These extremely common bugs are explainable by the fact that a average tester wouldn't know to test for that specific code.
+
+On one hand `msg.value` is code that is handled and present exclusively in the EVM Node, covering it would require instrumenting the node.
+
+On the other hand, `USDT` compatibility is a specific instance of the "arbitrary address / inconsistent behaviour" bug, which is a result of our human inability to account for all scenarios when we use the equivalent of `*` for operations.
+
+### Examples
+
+- `msg.value` causes balance to decrease, the code is in the node.
+- Precompile actual code and behaviour, as well as their mere existence
+- Different Token Behaviour on Transfer
+- Calling / Delegate calling to hardcoded addresses with any parameter
+- Calling / Delegate calling to any address
+
+### Notable hacks
+
+- Precompile signature skip bug -> TODO Some wallet
+- Parity hack
+- Every unsanitized input that doesn't imply math, e.g. ability to become owner, mint / burn.
 
 ## Implied state
 
+TODO | These are states and code that doesn't exist. But that semantically makes sense, and can be easily be represented by a flag of some sort.
+
+The most common example is `reentrant`, while many codebases don't use the `nonReentrant` modifier for well reasoned ways, it's very obvious in hindsight how a contract, in a reentrant context is very different from the same contract in  non reentrant state.
+
+Another interesting example is dealing with donations as well as tokens rebase or have inherent rounding errors, these introduce an implicit state that can be represented by the difference between the values recorded in storage and the values recorded by the token.
+
+Wisdom is being able to identify these patterns and account for them.
+
+However, I believe that after this research, we should collectively be building tools or finding techniques to automatically track for these, flagging reentrancy is not particularly useful in the way it's been done so far, whereas giving an auditor a checklist of states that are implied, in a more explicit way, can help identify these issues earlier.
+
+### Examples
+
 - `reentrant` state being the classic example
+- Different token balance tracking, and inconsistency with recorded state. (A bit of stretch)
+- Solvent, Insolvent | Liquidatable | Liquidated -> (stretch)
 
 ## Metaproperties
 
+Are the definition of `iykyk`, they can't be easily represented as some basic missing flag in the code, however expert Invariant Testers write these very often.
+
+A meta property is simply a property of the system, that is not part of the SUT.
+
+This definition captures everything that may be missed in any form of review, and due to this we're forced to underapproximate the total number of properties that we could identify.
+
+In spite of this, I chose to separate MetaProperties, which most often can be written as simple stateless assertions about the system and sometimes can be written with ghost variables supporting them, from World Splits, which I believe is a completely underexplored area of Invariant Testing, and tends to yield the vast majority of mathematically based exploits.
+
+For any variable, alteration of the variables, etc.. you can write a meta property.
+
+Fundamentally these are the Invariants we and others write.
+
+Reaching all possible Coverage Classes of coverage of the meta properties (LIKELY because union = overestimated) requires covering the union between the original systems Coverage Classes, as well as the set of constraints that are implied by the Meta Properties.
+
+### Examples
+
 - Relation between 2 variables: [similar magnitude, 1 massively bigger than other]
 
+## World Splits
 
-## World splits
+I created this category to emphasize it's complexity as well as net distinction between the behaviours we observe when dealing with a "well behaved" system, in contrast to us hitting the World Split on the system.
+
+In reality all math in our domain is not in a group, meaning it's never well behaved as we'd expect it to, but in practice in most cases it is, and as such I created the idea of World Splits to signal when something completely unintuive happens to the mathematical behaviour of the SUT.
+
+TODO FIBONACCI or something else?
+
+### Examples
 
 - Divisions causing no / negligible truncation
 - Truncation causing significant invariants no longer holding
 
+### Notable Bugs
 
+- Bold bug I found in my report
+- Euler V1
+- Degenbox with one function to allow repay
+- Balancer hack? TODO
 
 ## References
 
