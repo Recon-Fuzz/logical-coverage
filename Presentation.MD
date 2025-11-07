@@ -163,7 +163,7 @@ Fundamentally these are the Invariants we and others write.
 
 Reaching all possible Coverage Classes of coverage of the meta properties (LIKELY because union = overestimated) requires covering the union between the original systems Coverage Classes, as well as the set of constraints that are implied by the Meta Properties.
 
-### Examples
+### Examples
 
 - Relation between 2 variables: [similar magnitude, 1 massively bigger than other]
 
